@@ -1,5 +1,5 @@
 Для выполнения работы на серверах Kaggle необходимо:
-1. Зарегестрироватся на kaggle.com
+1. Зарегистрироваться на kaggle.com
 2. Ознакомиться с датасетом по ссылке: https://www.kaggle.com/paultimothymooney/chest-xray-pneumonia
 3. Notebook с введением в Python доступен по ссылке: https://www.kaggle.com/ivanstebakov/python-get-started
 4. Notebook с обучением нейросети доступен по ссылке: https://www.kaggle.com/ivanstebakov/pytoch-classifer-for-chest-x-ray-images
@@ -18,4 +18,4 @@ conda activate <env>
 cd <path> (<path> - Путь к скачанной папке, для смены диска диска ввести: C: или D: и т.п.)
 jupyter notebook
 7. В браузере откроется окно для работы с Jupyter Notebook. Нужно выбрать существующий notebook для редактирования, либо создать новый.
-8. Для завершения работы на "Home Page" нажать кпопку "Quit", предварительно сохранив все необходимое, и закрыть "Anaconda Prompt".
+8. Для завершения работы на "Home Page" нажать кнопку "Quit", предварительно сохранив все необходимое, и закрыть "Anaconda Prompt".
