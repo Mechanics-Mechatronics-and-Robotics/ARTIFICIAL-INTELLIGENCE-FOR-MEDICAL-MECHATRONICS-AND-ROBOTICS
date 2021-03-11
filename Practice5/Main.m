@@ -16,7 +16,7 @@
 clear; close all; clc
 
 %Directories
-cd 'F:\work\21_Методы искусственного интеллекта в медицинской робототехнике\2021\Practice5'
+cd 'E:\work\21_AI4MMR\Practice5'
 trainDir='SmilesTrain';
 testDir='SmilesTest';
 
@@ -43,7 +43,7 @@ maxpoolVal=[2 2];%max pool
 
 MiniBatchS=10;% mini-batch size
 MaxE=2;%number of epoches
-InitialLearnR=1e-7;%initial learn rate (alpha)
+InitialLearnR=1e-6;%initial learn rate (alpha)
 ValidationF=3;%validation frequency
 
 %Choose the net type
@@ -135,7 +135,8 @@ end
 %% 5. Test the CNN
 
 [YPred] = classify(net,augimdsTest);%predictions
-YTest = augimdsTest.Labels;%targets
+YTest = imdsTest.Labels;%targets
+
 %Visualisation
 idx = randperm(numel(imdsTest.Files),n);
 figure
