@@ -7,27 +7,26 @@
 % 
 % Instructions
 % You will need to complete or create the following script and functions:
-%     Main.m
+%     
 %     alexNet.m
 %     proposedNet.m
-%     accuracy.m
 %
 %% 0.Settings
 clear; close all; clc
 
 %Directories
-cd 'E:\work\21_AI4MMR\Practice5'
+cd 'F:\work\21_Методы искусственного интеллекта в медицинской робототехнике\2021\Practice5'
 trainDir='SmilesTrain';
 testDir='SmilesTest';
 
-%Additional setting
-n=16;%number of images in a preview
-
 %DataSet
 imsize=[30 30 3];% images size
-imsize2=[227 227 3];% alternative images size
+imsize2=[227 227 3];% alternative image size
 numClasses=2;%number of classes
 trainRatio=0.7;%train ratio
+
+%Choose the net type
+netType="alexnet";% "proposed" or "alexnet"
 
 %Augmentation
 ang=[-5 5];%angle
@@ -35,22 +34,24 @@ sc=[1 1];%scale
 sh=[-1 1];%shear
 transl=[-1 1];%translation
 
-%Train options
-kernel=[11 11];%kernel
+MiniBatchS=10;% mini-batch size
+MaxE=30;%number of epoches
+InitialLearnR=1e-4;%initial learn rate (alpha)
+ValidationF=3;%validation frequency
+
+%Train options (when netType == 'proposed')
+FilterSize=[3 3];%kernel
+NumFilters=32;
 dropoutVal=0.5;%dropout probability
 strideVal=[2 2];%stride
 maxpoolVal=[2 2];%max pool
-
-MiniBatchS=10;% mini-batch size
-MaxE=2;%number of epoches
-InitialLearnR=1e-6;%initial learn rate (alpha)
-ValidationF=3;%validation frequency
-
-%Choose the net type
-netType='alexnet';% 'proposed' or 'alexnet'
+        
+%Additional setting
+n=16;%number of images in a preview
+haveYouGeneratedNet="no";% have you already generated the net code: y/n
 
 %% 1. Create Data Store
-%for the training and validation
+%for training and validation
 imds = imageDatastore(trainDir, ...
     'IncludeSubfolders',true, ...
     'LabelSource','foldernames');
@@ -101,11 +102,19 @@ for i = 1:n
 end
 
 %% 3. Create the CNN using Deep Network Designer and generate code
-%Use deepNetworkDesigner command to start
-%Create your own CNN when netType = 'proposed'
-%Dowload and edit the alexnet when netType = 'alexnet' 
-%Generate code proposedNet.m or alexNet.m after creating or editing 
-
+if haveYouGeneratedNet == "no"
+    %Use deepNetworkDesigner command to start
+    deepNetworkDesigner
+    if netType == "alexnet"
+        %Download and edit the alexnet when netType = 'alexnet' 
+        %Download
+        alexnet
+        %Then edit it in the Designer and then generate code alexNet.m
+    else 
+        %Create your own CNN in the Designer when netType = 'proposed'
+        %Generate code proposedNet.m after creation
+    end
+end
 %% 4. Download and train the CNN
 
 %Training options
@@ -118,24 +127,25 @@ opts = trainingOptions('sgdm', ...
     'ValidationFrequency',ValidationF, ...
     'Verbose',true, ...
     'Plots','training-progress');
+
 %Download and train using the generated code proposedNet.m or alexNet.m         
 switch netType
-    case 'proposed'
+    case "proposed"
         [layers] =...
-            proposedNet(imsize,numClasses,kernel,dropoutVal,strideVal,...
-            maxpoolVal)
+            proposedNet(imsize,numClasses,FilterSize,NumFilters,...
+            dropoutVal,strideVal,maxpoolVal);
         analyzeNetwork(layers)
-        net = trainNetwork(augimdsTrain,layers,opts);
-        analyzeNetwork(layers)
-    case 'alexnet'
-        [layers] = alexNet(numClasses)
+        net = trainNetwork(augimdsTrain,layers,opts)
+    case "alexnet"
+        [layers] = alexNet(numClasses);
         analyzeNetwork(layers)
         net = trainNetwork(augimdsTrain,layers,opts)
 end
+
 %% 5. Test the CNN
 
 [YPred] = classify(net,augimdsTest);%predictions
-YTest = imdsTest.Labels;%targets
+ YTest = imdsTest.Labels;%targets
 
 %Visualisation
 idx = randperm(numel(imdsTest.Files),n);
