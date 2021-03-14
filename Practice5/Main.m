@@ -75,14 +75,14 @@ imageAugmenter = imageDataAugmenter( ...
     'RandYTranslation',transl);
  %according to the netType option
 switch netType
-    case 'proposed'
+    case "proposed"
         augimdsTrain = augmentedImageDatastore(imsize,...
             imdsTrain,'DataAugmentation',imageAugmenter);
         augimdsValidation = augmentedImageDatastore(imsize,...
             imdsValidation,'DataAugmentation',imageAugmenter);
         augimdsTest = augmentedImageDatastore(imsize,...
             imdsTest,'DataAugmentation',imageAugmenter);
-    case 'alexnet'
+    case "alexnet"
         augimdsTrain = augmentedImageDatastore(imsize2,...
             imdsTrain,'DataAugmentation',imageAugmenter);
         augimdsValidation = augmentedImageDatastore(imsize2,...
@@ -110,9 +110,13 @@ if haveYouGeneratedNet == "no"
         %Download
         alexnet
         %Then edit it in the Designer and then generate code alexNet.m
+        %[layers] = alexNet(numClasses)
     else 
         %Create your own CNN in the Designer when netType = 'proposed'
         %Generate code proposedNet.m after creation
+        %[layers] =...
+        %    proposedNet(imsize,numClasses,FilterSize,NumFilters,...
+        %    dropoutVal,strideVal,maxpoolVal)
     end
 end
 %% 4. Download and train the CNN
