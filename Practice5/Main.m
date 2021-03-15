@@ -2,7 +2,7 @@
 
 % The goal of the task is a deep network desing to recognise sad and fun
 % smiles. 
-% The dataset is submitten on GitHub: https://github.com/Mechanics-Mechatronics-and-Robotics/ARTIFICIAL-INTELLIGENCE-FOR-MEDICAL-MECHATRONICS-AND-ROBOTICS/tree/main/Practice5
+% The dataset is submitted on GitHub: https://github.com/Mechanics-Mechatronics-and-Robotics/ARTIFICIAL-INTELLIGENCE-FOR-MEDICAL-MECHATRONICS-AND-ROBOTICS/tree/main/Practice5
 % The dataset consists of 2 folders: the train and the test ones.
 % 
 % Instructions
@@ -15,7 +15,7 @@
 clear; close all; clc
 
 %Directories
-cd 'F:\work\21_Методы искусственного интеллекта в медицинской робототехнике\2021\Practice5'
+cd 'F:\work\21_ГЊГҐГІГ®Г¤Г» ГЁГ±ГЄГіГ±Г±ГІГўГҐГ­Г­Г®ГЈГ® ГЁГ­ГІГҐГ«Г«ГҐГЄГІГ  Гў Г¬ГҐГ¤ГЁГ¶ГЁГ­Г±ГЄГ®Г© Г°Г®ГЎГ®ГІГ®ГІГҐГµГ­ГЁГЄГҐ\2021\Practice5'
 trainDir='SmilesTrain';
 testDir='SmilesTest';
 
