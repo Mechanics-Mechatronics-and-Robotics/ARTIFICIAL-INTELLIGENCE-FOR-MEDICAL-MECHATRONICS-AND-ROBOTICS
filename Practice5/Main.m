@@ -1,166 +1,151 @@
-% Task 1: Deep convolutional neural networks (CNN) design
+clear all
+clc
 
-% The goal of the task is a deep network desing to recognise sad and fun
-% smiles. 
+%The goal of the lab.task is semantic segmentation of medical images.  
+%Want to know more?
+% See "Semantic Segmentation With Deep Learning" on MATLAB Help
+
 % The dataset is submitted on GitHub: https://github.com/Mechanics-Mechatronics-and-Robotics/ARTIFICIAL-INTELLIGENCE-FOR-MEDICAL-MECHATRONICS-AND-ROBOTICS/tree/main/Practice5
 % The dataset consists of 2 folders: the train and the test ones.
-% 
+%
 % Instructions
-% You will need to complete or create the following script and functions:
-%     
-%     alexNet.m
+% You will need to complete the following script:
+%      
+%     Main.m
+%
+% You may enhance the function
+%
 %     proposedNet.m
 %
-%% 0.Settings
-clear; close all; clc
 
-%Directories
-cd 'F:\work\21_Ìåòîäû èñêóññòâåííîãî èíòåëëåêòà â ìåäèöèíñêîé ðîáîòîòåõíèêå\2021\Practice5'
-trainDir='SmilesTrain';
-testDir='SmilesTest';
+%% 1.Preprocess: prepare and load labeled data
 
-%DataSet
-imsize=[30 30 3];% images size
-imsize2=[227 227 3];% alternative image size
-numClasses=2;%number of classes
-trainRatio=0.7;%train ratio
+cd %'G:\VCS_nail_Fold'
+saveDir=cd;%save main directory
 
-%Choose the net type
-netType="alexnet";% "proposed" or "alexnet"
+%Use "Image Labeler" Apps to add labels in images.
+%Then export labels to file  
+load('gTruth')
+gTruth
+labelsInfo=gTruth.LabelDefinitions
+
+%% 2. Settings
+%Labeling
+classNames = [gTruth.LabelDefinitions{1:2,1}]
 
 %Augmentation
-ang=[-5 5];%angle
-sc=[1 1];%scale
-sh=[-1 1];%shear
-transl=[-1 1];%translation
+ang=[-1 1];
+sc=[1 1];
+sh=[-1 1];
+transl=[-1 1]; 
 
-MiniBatchS=10;% mini-batch size
-MaxE=30;%number of epoches
-InitialLearnR=1e-4;%initial learn rate (alpha)
-ValidationF=3;%validation frequency
+%Semantic segmentation
+%Proposed net
+ %Input 
+  imsize=[224 224 1];
+  numClasses = size(gTruth.LabelDefinitions,1);
 
-%Train options (when netType == 'proposed')
-FilterSize=[3 3];%kernel
-NumFilters=32;
-dropoutVal=0.5;%dropout probability
-strideVal=[2 2];%stride
-maxpoolVal=[2 2];%max pool
-        
-%Additional setting
-n=16;%number of images in a preview
-haveYouGeneratedNet="no";% have you already generated the net code: y/n
+ %Downsampling
+  numFilters = 8;
+  filterSize = 9;
+  PaddingSize=4;
+  poolSize=2;
+  StrideSize=2;
+  conv=convolution2dLayer(filterSize,numFilters,'Padding',PaddingSize);
+  maxPoolDownsample2x=maxPooling2dLayer(poolSize,'Stride',StrideSize);
+ 
+ %Upsampling
+  filterSize = 4;
+  StrideSize=2;
+  CroppingSize=1;% is set to 1 to make the output size = 2 * input size
+  transposedConvUpsample2x=...
+    transposedConv2dLayer(filterSize,numFilters,'Stride',StrideSize,...
+    'Cropping',CroppingSize);
 
-%% 1. Create Data Store
-%for training and validation
-imds = imageDatastore(trainDir, ...
-    'IncludeSubfolders',true, ...
-    'LabelSource','foldernames');
-%for test
-imdsTest = imageDatastore(testDir, ...
-    'IncludeSubfolders',true, ...
-    'LabelSource','foldernames');
+%Training
+trainAlgorithm = 'adam'; %'sgdm', 'adam'
+InitLearnRate = 1e-4;
+MaxEp = 500;
+MiniBatchS = 3;
+LearnRateDropFact = 0.9;
+LearnRateDropPer = 100;
 
-%% 2. Create training and validation datasets. Augment data
-%Devide dataset into 2 parts to create training and validation datasets
-[imdsTrain,imdsValidation] = ...
-    splitEachLabel(imds,trainRatio,'randomized'); 
+%U-Net
+encoderDepth=3;% if unet
 
-%Augment dataset
-imageAugmenter = imageDataAugmenter( ...
+%The rest
+numObservations=4;
+netType='unetplus';% 'proposed' or 'unetplus'
+
+%% 3. Create training data
+augmenter = imageDataAugmenter( ...
     'RandRotation',ang, ...
     'RandScale',sc,...
     'RandXShear',sh,...
     'RandYShear',sh,...
     'RandXTranslation',transl,...
     'RandYTranslation',transl);
- %according to the netType option
+trainingData = pixelLabelImageDatastore(gTruth);%,'DataAugmentation',augmenter);
+
+%Analyze training data and correct class weights
+tbl = countEachLabel(trainingData)
+totalNumberOfPixels = sum(tbl.PixelCount);
+frequency = tbl.PixelCount / totalNumberOfPixels;
+classWeights = 1./frequency
+
+%% 4. Create the net
 switch netType
-    case "proposed"
-        augimdsTrain = augmentedImageDatastore(imsize,...
-            imdsTrain,'DataAugmentation',imageAugmenter);
-        augimdsValidation = augmentedImageDatastore(imsize,...
-            imdsValidation,'DataAugmentation',imageAugmenter);
-        augimdsTest = augmentedImageDatastore(imsize,...
-            imdsTest,'DataAugmentation',imageAugmenter);
-    case "alexnet"
-        augimdsTrain = augmentedImageDatastore(imsize2,...
-            imdsTrain,'DataAugmentation',imageAugmenter);
-        augimdsValidation = augmentedImageDatastore(imsize2,...
-            imdsValidation,'DataAugmentation',imageAugmenter);
-        augimdsTest = augmentedImageDatastore(imsize2,...
-            imdsTest,'DataAugmentation',imageAugmenter);
-end
-        
-%Visualisation
-numTrainImages = numel(imdsTrain.Labels);
-idx = randperm(numTrainImages,n);
-figure
-for i = 1:n
-    subplot(sqrt(n),sqrt(n),i)
-    I = readimage(imdsTrain,idx(i));
-    imshow(I)
+    case 'Proposed'
+        [layers] = proposedNet(imsize,numClasses,classWeights,tbl,...
+            maxPoolDownsample2x,transposedConvUpsample2x)
+        analyzeNetwork(layers)
+    case 'unetplus'
+        [lgraph] = unetplus(imsize,numClasses,classWeights,tbl)
+        analyzeNetwork(lgraph)
 end
 
-%% 3. Create the CNN using Deep Network Designer and generate code
-if haveYouGeneratedNet == "no"
-    %Use deepNetworkDesigner command to start
-    deepNetworkDesigner
-    if netType == "alexnet"
-        %Download and edit the alexnet when netType = 'alexnet' 
-        %Download
-        alexnet
-        %Then edit it in the Designer and then generate code alexNet.m
-        %[layers] = alexNet(numClasses)
-    else 
-        %Create your own CNN in the Designer when netType = 'proposed'
-        %Generate code proposedNet.m after creation
-        %[layers] =...
-        %    proposedNet(imsize,numClasses,FilterSize,NumFilters,...
-        %    dropoutVal,strideVal,maxpoolVal)
-    end
-end
-%% 4. Download and train the CNN
-
-%Training options
-opts = trainingOptions('sgdm', ...
-    'MiniBatchSize',MiniBatchS, ...
-    'MaxEpochs',MaxE, ...
-    'InitialLearnRate',InitialLearnR, ...
-    'Shuffle','every-epoch', ...
-    'ValidationData',augimdsValidation, ...
-    'ValidationFrequency',ValidationF, ...
-    'Verbose',true, ...
-    'Plots','training-progress');
-
-%Download and train using the generated code proposedNet.m or alexNet.m         
+%% 5. Train the net
 switch netType
-    case "proposed"
-        [layers] =...
-            proposedNet(imsize,numClasses,FilterSize,NumFilters,...
-            dropoutVal,strideVal,maxpoolVal);
-        analyzeNetwork(layers)
-        net = trainNetwork(augimdsTrain,layers,opts)
-    case "alexnet"
-        [layers] = alexNet(numClasses);
-        analyzeNetwork(layers)
-        net = trainNetwork(augimdsTrain,layers,opts)
+    case 'Proposed'
+        opts = trainingOptions('sgdm', ...
+            'InitialLearnRate',InitLearnRate, ...
+            'MaxEpochs',MaxEp, ...
+            'MiniBatchSize',MiniBatchS,...
+            'LearnRateDropFactor',LearnRateDropFact, ...
+            'LearnRateDropPeriod',LearnRateDropPer, ...
+            'Plots','training-progress');
+        net = trainNetwork(trainingData,layers,opts);
+    case 'unetplus'
+        opts = trainingOptions(trainAlgorithm, ...
+            'InitialLearnRate',InitLearnRate, ...
+            'MaxEpochs',MaxEp, ...
+            'MiniBatchSize',MiniBatchS,...
+            'LearnRateDropFactor',LearnRateDropFact, ...
+            'LearnRateDropPeriod',LearnRateDropPer, ...
+            'Plots','training-progress');
+        net = trainNetwork(trainingData,lgraph,opts)
 end
 
-%% 5. Test the CNN
-
-[YPred] = classify(net,augimdsTest);%predictions
- YTest = imdsTest.Labels;%targets
-
-%Visualisation
-idx = randperm(numel(imdsTest.Files),n);
+%% 6. Check the trained net using 1 image
+testImage = imread('img1_00000_00000000243.png');
+C = semanticseg(testImage,net);
+B = labeloverlay(testImage,C);
 figure
-for i = 1:n
-    subplot(sqrt(n),sqrt(n),i)
-    I = readimage(imdsTest,idx(i));
-    imshow(I)
-    label = ([YPred(idx(i)),YTest(idx(i))]);
-    title(string(label));
-end
+imshow(B)
 
-%Accuracy
-accuracy = mean(YPred == YTest)
+%Create a binary mask of the first class
+Mask = C == classNames{1};
+figure
+imshowpair(testImage, Mask,'montage')
+
+%% 7. Check the trained net using all images in the Test folder
+
+% Enter your code here
+%
+%     Create datastore of images from the Test folder
+%     Segment all the images using the trained net
+%     Save segmented images in a new folder
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
