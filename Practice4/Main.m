@@ -15,13 +15,9 @@
 clear; close all; clc
 
 %Directories
-cd 'E:\work\21_AI4MMR\Practice4'
+cd 'F:\work\21_AI4MMR\2021\Practice4'
 trainDir='SmilesTrain';
 testDir='SmilesTest';
-
-%Enter your code here
-%paramDir=''
-%%%%%%%%%%%%%%%%%%%%%%
 
 %Additional setting
 n=16;%number of images in a preview
@@ -40,8 +36,8 @@ transl=[-1 1];%translation
 
 %Train options
 MiniBatchS=10;% mini-batch size
-MaxE=2;%number of epoches
-InitialLearnR=1e-4;%initial learn rate (alpha)
+MaxE=10;%number of epoches
+InitialLearnR=1e-3;%initial learn rate (alpha)
 ValidationF=3;%validation frequency
 
 %Choose the net type
@@ -104,6 +100,10 @@ end
 %Generate code and edit resnet18.m when netType = 'resnet18'
 %Generate code with Pretrained Parameters and edit resnet18pretrained.m
 %when netType ='resnet18pretrained'
+
+%%%%%%%%Enter your code here when prepare resnet18pretrained.m 
+%paramDir=''
+%%%%%%%%%%%%%%%%%%%%%%
 
 %% 4. Download and train the CNN
 
